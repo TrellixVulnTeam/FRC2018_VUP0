@@ -1,0 +1,550 @@
+import tbapy
+import csv
+import gviz_api
+import os
+
+tba = tbapy.TBA('fWFSAeNa3VxZUdVJhaXgAXjnM9mfLBmbw1bbOrviglJBtJxmcUTANIMpECdWSSwU')
+
+year = "2018"
+red = "red"
+blue = "blue"
+teamKeys = "team_keys"
+event = input("Enter an event ID: ")  # 2018week0, 2018mokc2, 2018iacf
+lev = "Levitate"
+csvFile = ("TBA_Match_Data_%s.csv" % event)
+csvFilePath = (event + "\\" + csvFile)
+htmlFile = ("TBACharts_%s.html" % event)
+htmlFilePath = (event + "\\" + htmlFile)
+teamObjects = tba.event_teams(event, simple="true")
+dictList = {}
+dictChart = {}
+dictPredict = {}
+
+page_template = """
+<html>
+  <head>
+  <title>TBA Data</title>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+      google.load("visualization", "1", {packages:["table"]});
+      google.load("visualization", "1", {packages:["controls", "corechart"]});
+      google.setOnLoadCallback(drawTable);
+      
+      function drawTable() {
+        %(jscode)s
+        %(jschart)s
+        %(jspredict)s
+        var jscode_table = new google.visualization.Table(document.getElementById('table_div_jscode'));
+        jscode_table.draw(jscode_data, {allowHtml: true, showRowNumber: true, frozenColumns: 2});
+        
+        var jspredict_table = new google.visualization.Table(document.getElementById('table_div_jspredict'));
+        jspredict_table.draw(jspredict_data, {showRowNumber: true});
+        
+        var options = {
+        width: 1500,
+        height: 1000,
+        isStacked: true
+        };
+        
+        var jschart_table = new google.visualization.BarChart(document.getElementById('chart_div'));
+        jschart_table.draw(jschart_data, options);
+        
+        google.visualization.events.addListener(jscode_table, 'select', selectHandler);
+
+        function selectHandler() {
+            var selection = jscode_table.getSelection();
+            var message = '';
+            for (var i = 0; i < selection.length; i++) {
+                var item = selection[i];
+                if (item.row != null && item.column != null) {
+                    var str = jscode_data.getFormattedValue(item.row, item.column);
+                    message += '{row:' + item.row + ',column:' + item.column + '} = ' + str;
+                } else if (item.row != null) {
+                    var str = jscode_data.getFormattedValue(item.row, 0);
+                    message += '{row:' + item.row + ', column:none}; value (col 0) = ' + str;
+                } else if (item.column != null) {
+                    var str = jscode_data.getFormattedValue(0, item.column);
+                    message += '{row:none, column:' + item.column + '}; value (row 0) = ' + str;
+                }
+            }
+            if (message == '') {
+                message = 'nothing';
+            }
+        var teamsheet = "TBACharts_2018week0_" + str + ".html";
+        //alert('You selected ' + document.getElementById("team_object").data + ' <--old. new--> ' + teamsheet);
+        document.getElementById("team_object").data = teamsheet;
+        document.getElementById("team_object").width = '1500px';
+        document.getElementById("team_object").height = '800px';
+        }
+           
+      }
+    </script>
+  </head>
+  <body>
+    <H1>TBA Table Data</H1>
+    <div id="table_div_jscode"></div>
+    <div id ="team_data"> 
+    <object id="team_object" type='text/html' data='' width='0' 
+    height='0' style='overflow:auto;border:2px ridge blue'></object>
+    </div>
+    <H1>TBA Chart</H1>
+    <div id="chart_div"></div>
+    <H1>Predicting Scores</H1>
+    <div id="table_div_jspredict"></div>
+  </body>
+</html>
+"""
+
+team_page_template = """
+<html>
+  <head>
+  <title>TBA Team Data</title>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+      google.load("visualization", "1", {packages:["controls", "corechart"]});
+      google.setOnLoadCallback(drawTable);
+      
+      function drawTable() {
+        %(jsteam)s
+        
+        var options = {
+        width: 1200,
+        height: 600,
+        isStacked: true
+        };
+        
+        var jsteam_table = new google.visualization.SteppedAreaChart(document.getElementById('chart_div'));
+        jsteam_table.draw(jsteam_data, options);
+           
+      }
+    </script>
+  </head>
+  <body>
+    <H1>%(teamNumber)s - %(teamName)s Data</H1>
+    <div id="chart_div"></div>
+  </body>
+</html>
+"""
+
+
+def frc(points):
+    output = round(points / matchCount, 2)
+    return output
+
+
+def createlink(matchkeystring, linktext):
+    link = "<a href=https://www.thebluealliance.com/match/" + matchkeystring + " target='_blank'>" + linktext +\
+           "</a>"
+    return link
+
+
+if not os.path.exists(event):
+    os.makedirs(event, 0o777)
+f = open(csvFilePath, "w+", newline='')
+
+teamData = csv.writer(f, quoting=csv.QUOTE_ALL)
+
+teamData.writerow(["Team Number", "Team Name", "Number of Matches", "Ranking Points", "Win Percent", "Auto Mobility",
+                   "Auto Switch", "Auto Scale", "Tele Switch", "Opponent Switch", "Tele Scale", "No Cubes in Vault",
+                   "No of Climbs", "No of Parks", "Foul Points", "Average Score", "Best Match", "Worst Match"])
+
+for team in teamObjects:
+    # Start variable list to reset for each team #
+    matchCount = 0
+    winCount = 0
+    winRP = 0
+    autoQuestRP = 0
+    faceBossRP = 0
+    autoMobility = 0
+    autoSwitch = 0
+    autoScale = 0
+    teleSwitch = 0
+    teleScale = 0
+    teleOppSwitch = 0
+    vault = 0
+    climb = 0
+    levitate = 0
+    park = 0
+    endGameScore = 0
+    foulPoints = 0
+    totalPoints = 0
+    bestScore = 0
+    worstScore = 0
+    worstMatchNumber = "NA"
+    bestMatchNumber = "NA"
+    bestMatch = "NA"
+    worstMatch = "NA"
+    dictMatch = {}
+    teamNumber = getattr(team, "team_number")
+    teamName = getattr(team, "nickname")
+    teamKey = getattr(team, "key")
+    eventMatch = tba.team_matches(teamKey, event)
+    # Eng variable list to reset for each team #
+    print("Looking at team", teamNumber)
+    # Look through matches #
+    for match in eventMatch:
+        matchKey = getattr(match, "key")
+        matchNumber = getattr(match, "match_number")
+        matchLevel = getattr(match, "comp_level")
+        matchCount += 1
+        alliances = getattr(match, "alliances")
+        redScore = alliances[red]["score"]
+        blueScore = alliances[blue]["score"]
+        winningAlliance = getattr(match, "winning_alliance")
+        scoreDict = getattr(match, "score_breakdown")
+
+        # check if played match
+        if scoreDict is None:
+            break
+        if redScore == -1 or blueScore == -1:
+            break
+
+        # which alliance is the team on #
+        if teamKey in alliances[red]["team_keys"] or teamKey in alliances[red]["surrogate_team_keys"]:
+            alliance = red
+            score = redScore
+            opponent = blue
+        else:
+            alliance = blue
+            score = blueScore
+            opponent = red
+        compLevel = getattr(match, "comp_level")
+        # Score breakdown below. Beware.
+        if alliance == winningAlliance:
+            winCount += 1
+            outcome = "W"
+        else:
+            outcome = "L"
+        # Ranking Points
+        if compLevel == "qm":
+            if scoreDict[alliance]["autoQuestRankingPoint"]:
+                autoQuestRP += 1
+            if scoreDict[alliance]["faceTheBossRankingPoint"]:
+                faceBossRP += 1
+            if alliance == winningAlliance:
+                winRP = winRP + 2
+            if winningAlliance not in [blue, red]:
+                winRP += 1
+        # Set match numbers/scores
+        matchMobility = scoreDict[alliance]["autoRunPoints"]
+        matchASwitch = scoreDict[alliance]["autoSwitchOwnershipSec"]
+        matchAScale = scoreDict[alliance]["autoScaleOwnershipSec"]
+        matchTSwitch = scoreDict[alliance]["teleopSwitchOwnershipSec"]
+        matchTScale = scoreDict[alliance]["teleopScaleOwnershipSec"]
+        matchTOppSwitch = (scoreDict[opponent]["teleopSwitchOwnershipSec"] * -1)
+        matchVault = scoreDict[alliance]["vaultLevitateTotal"] + scoreDict[alliance]["vaultForceTotal"] + \
+            scoreDict[alliance]["vaultBoostTotal"]
+        matchFoul = (scoreDict[opponent]["foulPoints"] * -1)
+        matchPoints = alliances[alliance]["score"]
+        matchEndGame = scoreDict[alliance]["endgamePoints"]
+        matchClimb = int(scoreDict[alliance]["endgamePoints"] / 30)
+        matchPark = int((scoreDict[alliance]["endgamePoints"] % 30) / 5)
+
+        # Add climb or park
+        if (scoreDict[alliance]["endgameRobot1"] == lev or scoreDict[alliance]["endgameRobot2"] == lev or
+                scoreDict[alliance]["endgameRobot3"] == lev):
+            climb = climb + matchClimb - 1
+            levitate += 1
+        else:
+            climb = climb + matchClimb
+        park = park + matchPark
+
+        # Add Other scores
+        autoMobility = autoMobility + matchMobility
+        autoSwitch = autoSwitch + matchASwitch
+        autoScale = autoScale + matchAScale
+        teleSwitch = teleSwitch + matchTSwitch
+        teleScale = teleScale + matchTScale
+        teleOppSwitch = teleOppSwitch + matchTOppSwitch
+        vault = vault + matchVault
+        foulPoints = foulPoints + matchFoul
+        totalPoints = totalPoints + matchPoints
+        endGameScore = endGameScore + matchEndGame
+
+        # Find best/worst match
+        currentScore = alliances[alliance]["score"]
+        if matchCount == 1:
+            bestScore = currentScore
+            worstScore = currentScore
+            bestMatch = matchKey
+            worstMatch = matchKey
+            bestMatchNumber = ("%s-%s" % (matchLevel, matchNumber))
+            worstMatchNumber = ("%s-%s" % (matchLevel, matchNumber))
+        elif bestScore <= currentScore:
+            bestScore = currentScore
+            bestMatch = matchKey
+            bestMatchNumber = ("%s%s" % (matchLevel, matchNumber))
+        elif worstScore >= currentScore:
+            worstScore = currentScore
+            worstMatch = matchKey
+            worstMatchNumber = ("%s%s" % (matchLevel, matchNumber))
+        # Create match dictionaries
+        dictMatchKey = ("%s%s - %s" % (matchLevel, matchNumber, outcome))
+        # Determin Match Number for sorting
+        if matchLevel == "qf":
+            matchNumberSort = 100 + matchNumber
+        elif matchLevel == "sf":
+            matchNumberSort = 1000 + matchNumber
+        elif matchLevel == "f":
+            matchNumberSort = 10000 + matchNumber
+        else:
+            matchNumberSort = matchNumber
+
+        matchList = [matchNumberSort, matchMobility, matchASwitch, matchAScale, matchTSwitch, matchTScale,
+                     matchTOppSwitch, matchVault * 5, matchClimb * 30, matchPark * 5, matchFoul]
+        dictMatch.update({dictMatchKey: matchList})
+
+    # Find averages
+    if matchCount > 0:
+        winPercent = round((winCount / matchCount) * 100, 2)
+        avgAutoMobility = frc(autoMobility)
+        avgAutoSwitch = frc(autoSwitch)
+        avgAutoScale = frc(autoScale)
+        avgTeleSwitch = frc(teleSwitch)
+        avgTeleScale = frc(teleScale)
+        avgTeleOppSwitch = frc(teleOppSwitch)
+        avgVault = frc(vault)
+        avgEngGameScore = frc(endGameScore)
+        avgPoints = frc(totalPoints)
+        avgClimb = climb
+        avgPark = park
+        avgLevitate = levitate
+        avgFoulPoints = frc(foulPoints)
+    else:
+        winPercent = 0
+        avgAutoMobility = 0
+        avgAutoSwitch = 0
+        avgAutoScale = 0
+        avgTeleSwitch = 0
+        avgTeleScale = 0
+        avgTeleOppSwitch = 0
+        avgVault = 0
+        avgEngGameScore = 0
+        avgPoints = 0
+        avgClimb = 0
+        avgPark = 0
+        avgLevitate = 0
+        avgFoulPoints = 0
+
+    # Aggregate some data
+    totalRP = winRP + autoQuestRP + faceBossRP
+    worstLink = createlink(worstMatch, worstMatchNumber)
+    bestLink = createlink(bestMatch, bestMatchNumber)
+
+    # Create data dictionaries for the charts
+    dataList = [teamNumber, teamName, matchCount, totalRP, winPercent, avgAutoMobility,
+                avgAutoSwitch, avgAutoScale, avgTeleSwitch, avgTeleOppSwitch, avgTeleScale, avgVault,
+                avgClimb, avgLevitate, avgPark, avgFoulPoints, avgPoints, bestLink, worstLink]
+    dataChart = [avgAutoMobility, avgAutoSwitch, avgAutoScale, avgTeleSwitch, avgTeleOppSwitch, avgTeleScale,
+                 avgVault * 5, frc(avgClimb * 30), frc(avgLevitate * 30), frc(avgPark * 5), avgFoulPoints]
+
+    # Write the row for the team
+    teamData.writerow(dataList)
+
+    dictList.update({teamNumber: dataList})
+    dictChart.update({teamNumber: dataChart})
+
+    # HTML for each team
+    htmlFileTeam = ("TBACharts_%s_%s.html" % (event, teamNumber))
+    htmlFileTeamPath = (event + "\\" + htmlFileTeam)
+    teamDescription = {("Match Key", "string"): [("Match Number Sort", "number"),
+                       ("Auto Mobility", "number"),
+                       ("Auto Switch", "number"),
+                       ("Auto Scale", "number"),
+                       ("Tele Switch", "number"),
+                       ("Tele Scale", "number"),
+                       ("Opponent Switch", "number"),
+                       ("Cubes in Vault", "number"),
+                       ("Climb Points", "number"),
+                       ("Park Points", "number"),
+                       ("Foul Points", "number")]
+                       }
+    team_table = gviz_api.DataTable(teamDescription)
+    team_table.LoadData(dictMatch)
+    jsteam = team_table.ToJSCode("jsteam_data",
+                                 columns_order=("Match Key", "Auto Mobility", "Auto Switch",
+                                                "Auto Scale", "Tele Switch", "Opponent Switch", "Tele Scale",
+                                                "Cubes in Vault", "Climb Points", "Park Points", "Foul Points"),
+                                 order_by="Match Number Sort")
+    hSub = open(htmlFileTeamPath, 'w')
+    hSub.write("")
+    hSub.write(team_page_template % vars())
+
+    hSub.close()
+
+f.close()
+
+print("Data created")
+# MATCH PREDICTIONS START HERE
+print("Starting Match Predictions")
+eventRemainingMatches = tba.event_matches(event)
+for match1 in eventRemainingMatches:
+    matchKey1 = getattr(match1, "key")
+    alliances1 = getattr(match1, "alliances")
+    redScore1 = alliances1[red]["score"]
+    blueScore1 = alliances1[blue]["score"]
+    # matchNumber = int(getattr(match1, "match_number"))
+    # If the match hasn't been played yet
+    if redScore1 == -1 or blueScore1 == -1:
+        print("Predicting Match" + matchKey1)
+        blueTeam1 = alliances1[blue]["team_keys"][0]
+        blueTeam2 = alliances1[blue]["team_keys"][1]
+        blueTeam3 = alliances1[blue]["team_keys"][2]
+        redTeam1 = alliances1[red]["team_keys"][0]
+        redTeam2 = alliances1[red]["team_keys"][1]
+        redTeam3 = alliances1[red]["team_keys"][2]
+        # trim teams down to just numbers
+        bT1Number = blueTeam1[3:]
+        bT2Number = blueTeam2[3:]
+        bT3Number = blueTeam3[3:]
+        rT1Number = redTeam1[3:]
+        rT2Number = redTeam2[3:]
+        rT3Number = redTeam3[3:]
+
+        # Predict the scores
+        """dictList ={teamNumber: [teamNumber [0], teamName[1], matchCount[2], totalRP[3], winPercent[4], vgMobility[5],
+                    avgAutoSwitch[6], avgAutoScale[7], avgTeleSwitch[8], avgTeleOppSwitch[9], avgTeleScale[10], 
+                    avgVault[11], avgClimb[12], avgLevitate[13], avgPark[14], avgFoulPoints[15], avgPoints[16], 
+                    bestLink[17], worstLink[18]]}
+                    
+           dictChart =avgVault * 5[6], frc(avgClimb * 30)[7], frc(avgLevitate * 30)[8], frc(avgPark * 5)[9]"""
+        # Blue Predicted Points
+        blueMobility = (dictList[int(bT1Number)][5] + dictList[int(bT2Number)][5] + dictList[int(bT3Number)][5]) / 3
+        blueAutoSwitch = (dictList[int(bT1Number)][6] + dictList[int(bT2Number)][6] +
+                          dictList[int(bT3Number)][6]) / 3
+        blueAutoScale = (dictList[int(bT1Number)][7] + dictList[int(bT2Number)][7] + dictList[int(bT3Number)][7]) / 3
+        blueTeleSwitch = (dictList[int(bT1Number)][8] + dictList[int(bT2Number)][8] + dictList[int(bT3Number)][8]) / 3
+        blueOppSwitch = (dictList[int(bT1Number)][9] + dictList[int(bT2Number)][9] + dictList[int(bT3Number)][9]) / 3
+        blueTeleScale = (dictList[int(bT1Number)][10] + dictList[int(bT2Number)][10] + dictList[int(bT3Number)][10]) / 3
+        blueVault = (dictList[int(bT1Number)][11] + dictList[int(bT2Number)][11] + dictList[int(bT3Number)][11]) * 5 / 3
+        blueEndGame = (dictChart[int(bT1Number)][7] + dictChart[int(bT2Number)][7] + dictChart[int(bT3Number)][7] +
+                       dictChart[int(bT1Number)][8] + dictChart[int(bT2Number)][8] + dictChart[int(bT3Number)][8] +
+                       dictChart[int(bT1Number)][9] + dictChart[int(bT2Number)][9] + dictChart[int(bT3Number)][9]) / 3
+        blueFouls = (dictList[int(bT1Number)][15] + dictList[int(bT2Number)][15] + dictList[int(bT3Number)][15]) / 3
+
+        # Red predicted points
+        redMobility = (dictList[int(rT1Number)][5] + dictList[int(rT2Number)][5] + dictList[int(rT3Number)][5]) / 3
+        redAutoSwitch = (dictList[int(rT1Number)][6] + dictList[int(rT2Number)][6] +
+                         dictList[int(rT3Number)][6]) / 3
+        redAutoScale = (dictList[int(rT1Number)][7] + dictList[int(rT2Number)][7] + dictList[int(rT3Number)][7]) / 3
+        redTeleSwitch = (dictList[int(rT1Number)][8] + dictList[int(rT2Number)][8] + dictList[int(rT3Number)][8]) / 3
+        redOppSwitch = (dictList[int(rT1Number)][9] + dictList[int(rT2Number)][9] + dictList[int(rT3Number)][9]) / 3
+        redTeleScale = (dictList[int(rT1Number)][10] + dictList[int(rT2Number)][10] + dictList[int(rT3Number)][10]) / 3
+        redVault = (dictList[int(rT1Number)][11] + dictList[int(rT2Number)][11] + dictList[int(rT3Number)][11]) * 5 / 3
+        redEndGame = (dictChart[int(rT1Number)][7] + dictChart[int(rT2Number)][7] + dictChart[int(rT3Number)][7] +
+                      dictChart[int(rT1Number)][8] + dictChart[int(rT2Number)][8] + dictChart[int(rT3Number)][8] +
+                      dictChart[int(rT1Number)][9] + dictChart[int(rT2Number)][9] + dictChart[int(rT3Number)][9]) / 3
+        redFouls = (dictList[int(rT1Number)][15] + dictList[int(rT2Number)][15] + dictList[int(rT3Number)][15]) / 3
+
+        bluePredictedScore = (blueMobility + blueAutoSwitch + blueAutoScale + (blueTeleSwitch + abs(redOppSwitch)) / 2 +
+                              blueTeleScale + blueVault + blueEndGame + abs(redFouls))
+        redPredictedScore = (redMobility + redAutoSwitch + redAutoScale + (redTeleSwitch + abs(blueOppSwitch)) / 2 +
+                             redTeleScale + redVault + redEndGame + abs(blueFouls))
+
+        if bluePredictedScore > redPredictedScore:
+            predictWinner = blue
+        elif bluePredictedScore < redPredictedScore:
+            predictWinner = red
+        else:
+            predictWinner = "tie"
+
+        # Build Dictionary
+        predictList = [matchKey1, predictWinner, bT1Number, bT2Number, bT3Number, bluePredictedScore, redPredictedScore,
+                       rT1Number, rT2Number, rT3Number]
+        dictPredict.update({matchKey1: predictList})
+
+# Create visualization of data
+description = {("Team Number", "string"): [("Team Number", "string"),
+               ("Team Name", "string"),
+               ("Number of Matches", "number"),
+               ("Ranking Points", "number"),
+               ("Win Percent", "number"),
+               ("Auto Mobility", "number"),
+               ("Auto Switch", "number"),
+               ("Auto Scale", "number"),
+               ("Tele Switch", "number"),
+               ("Opponent Switch", "number"),
+               ("Tele Scale", "number"),
+               ("Cubes in Vault", "number"),
+               ("No of Climbs", "number"),
+               ("No of Levitates", "number"),
+               ("No of Parks", "number"),
+               ("Foul Points", "number"),
+               ("Average Score", "number"),
+               ("Best Match", "string"),
+               ("Worst Match", "string")]
+               }
+
+# get dictionary for table
+data = dictList
+
+# Loading it into gviz_api.DataTable
+data_table = gviz_api.DataTable(description)
+data_table.LoadData(data)
+
+# Create a JavaScript code string.
+jscode = data_table.ToJSCode("jscode_data",
+                             columns_order=("Team Number", "Team Name", "Number of Matches", "Ranking Points",
+                                            "Win Percent", "Auto Mobility", "Auto Switch", "Auto Scale", "Tele Switch",
+                                            "Opponent Switch", "Tele Scale", "Cubes in Vault", "No of Climbs",
+                                            "No of Levitates", "No of Parks", "Foul Points", "Average Score",
+                                            "Best Match", "Worst Match"),
+                             order_by="Team Number")
+# Visualization Chart
+descriptionChart = {("Team Number", "string"): [("Auto Mobility", "number"),
+                    ("Auto Switch", "number"),
+                    ("Auto Scale", "number"),
+                    ("Tele Switch", "number"),
+                    ("Opponent Switch", "number"),
+                    ("Tele Scale", "number"),
+                    ("Cubes in Vault", "number"),
+                    ("Climb Points", "number"),
+                    ("Levitate Points", "number"),
+                    ("Park Points", "number"),
+                    ("Foul Points", "number")]
+                    }
+# get dictionary for Chart
+dataChart = dictChart
+# More loading for Chart
+data_table_chart = gviz_api.DataTable(descriptionChart)
+data_table_chart.LoadData(dataChart)
+
+# Data set for Chart
+jschart = data_table_chart.ToJSCode("jschart_data",
+                                    columns_order=("Team Number", "Auto Mobility", "Auto Switch", "Auto Scale",
+                                                   "Tele Switch", "Opponent Switch", "Tele Scale", "Cubes in Vault",
+                                                   "Climb Points", "Levitate Points", "Park Points", "Foul Points"),
+                                    order_by="Team Number")
+
+# Prediction Table
+descriptionPrediction = {("Match Key", "string"): [("Match Key", "string"),
+                                                   ("Winner", "string"),
+                                                   ("Blue 1", "string"),
+                                                   ("Blue 2", "string"),
+                                                   ("Blue 3", "string"),
+                                                   ("Blue Score", "number"),
+                                                   ("Red Score", "number"),
+                                                   ("Red 1", "string"),
+                                                   ("Red 2", "string"),
+                                                   ("Red 3", "string")
+                                                   ]}
+
+# loading predictions
+data_table_predict = gviz_api.DataTable(descriptionPrediction)
+data_table_predict.LoadData(dictPredict)
+
+# Data set for predictions
+jspredict = data_table_predict.ToJSCode("jspredict_data",
+                                        columns_order=("Match Key", "Winner", "Blue 1", "Blue 2", "Blue 3",
+                                                       "Blue Score", "Red Score", "Red 1", "Red 2", "Red 3"))
+
+# Put the JS code and JSON string into the template.
+h = open(htmlFilePath, 'w')
+h.write("")
+h.write(page_template % vars())
+
+h.close()
+os.system("start " + htmlFilePath)
+print("Charts Completed")

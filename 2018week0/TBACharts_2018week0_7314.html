@@ -1,0 +1,131 @@
+
+<html>
+  <head>
+  <title>TBA Team Data</title>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+      google.load("visualization", "1", {packages:["controls", "corechart"]});
+      google.setOnLoadCallback(drawTable);
+      
+      function drawTable() {
+        var jsteam_data = new google.visualization.DataTable();
+jsteam_data.addColumn("string", "Match Key", "Match Key");
+jsteam_data.addColumn("number", "Auto Mobility", "Auto Mobility");
+jsteam_data.addColumn("number", "Auto Switch", "Auto Switch");
+jsteam_data.addColumn("number", "Auto Scale", "Auto Scale");
+jsteam_data.addColumn("number", "Tele Switch", "Tele Switch");
+jsteam_data.addColumn("number", "Opponent Switch", "Opponent Switch");
+jsteam_data.addColumn("number", "Tele Scale", "Tele Scale");
+jsteam_data.addColumn("number", "Cubes in Vault", "Cubes in Vault");
+jsteam_data.addColumn("number", "Climb Points", "Climb Points");
+jsteam_data.addColumn("number", "Park Points", "Park Points");
+jsteam_data.addColumn("number", "Foul Points", "Foul Points");
+jsteam_data.addRows(8);
+jsteam_data.setCell(0, 0, "qm1 - L");
+jsteam_data.setCell(0, 1, 5);
+jsteam_data.setCell(0, 2, 0);
+jsteam_data.setCell(0, 3, 0);
+jsteam_data.setCell(0, 4, 0);
+jsteam_data.setCell(0, 5, -120);
+jsteam_data.setCell(0, 6, 0);
+jsteam_data.setCell(0, 7, 15);
+jsteam_data.setCell(0, 8, 30);
+jsteam_data.setCell(0, 9, 5);
+jsteam_data.setCell(0, 10, 0);
+jsteam_data.setCell(1, 0, "qm7 - W");
+jsteam_data.setCell(1, 1, 10);
+jsteam_data.setCell(1, 2, 0);
+jsteam_data.setCell(1, 3, 0);
+jsteam_data.setCell(1, 4, 97);
+jsteam_data.setCell(1, 5, -104);
+jsteam_data.setCell(1, 6, 125);
+jsteam_data.setCell(1, 7, 20);
+jsteam_data.setCell(1, 8, 30);
+jsteam_data.setCell(1, 9, 0);
+jsteam_data.setCell(1, 10, -65);
+jsteam_data.setCell(2, 0, "qm9 - W");
+jsteam_data.setCell(2, 1, 10);
+jsteam_data.setCell(2, 2, 0);
+jsteam_data.setCell(2, 3, 0);
+jsteam_data.setCell(2, 4, 114);
+jsteam_data.setCell(2, 5, -118);
+jsteam_data.setCell(2, 6, 115);
+jsteam_data.setCell(2, 7, 0);
+jsteam_data.setCell(2, 8, 0);
+jsteam_data.setCell(2, 9, 0);
+jsteam_data.setCell(2, 10, 0);
+jsteam_data.setCell(3, 0, "qf1 - W");
+jsteam_data.setCell(3, 1, 10);
+jsteam_data.setCell(3, 2, 8);
+jsteam_data.setCell(3, 3, 0);
+jsteam_data.setCell(3, 4, 79);
+jsteam_data.setCell(3, 5, -122);
+jsteam_data.setCell(3, 6, 112);
+jsteam_data.setCell(3, 7, 15);
+jsteam_data.setCell(3, 8, 30);
+jsteam_data.setCell(3, 9, 10);
+jsteam_data.setCell(3, 10, 0);
+jsteam_data.setCell(4, 0, "qf2 - L");
+jsteam_data.setCell(4, 1, 10);
+jsteam_data.setCell(4, 2, 0);
+jsteam_data.setCell(4, 3, 0);
+jsteam_data.setCell(4, 4, 132);
+jsteam_data.setCell(4, 5, -123);
+jsteam_data.setCell(4, 6, 0);
+jsteam_data.setCell(4, 7, 0);
+jsteam_data.setCell(4, 8, 0);
+jsteam_data.setCell(4, 9, 5);
+jsteam_data.setCell(4, 10, -30);
+jsteam_data.setCell(5, 0, "qf3 - W");
+jsteam_data.setCell(5, 1, 10);
+jsteam_data.setCell(5, 2, 8);
+jsteam_data.setCell(5, 3, 0);
+jsteam_data.setCell(5, 4, 136);
+jsteam_data.setCell(5, 5, -121);
+jsteam_data.setCell(5, 6, 116);
+jsteam_data.setCell(5, 7, 20);
+jsteam_data.setCell(5, 8, 30);
+jsteam_data.setCell(5, 9, 10);
+jsteam_data.setCell(5, 10, -25);
+jsteam_data.setCell(6, 0, "sf1 - L");
+jsteam_data.setCell(6, 1, 10);
+jsteam_data.setCell(6, 2, 0);
+jsteam_data.setCell(6, 3, 0);
+jsteam_data.setCell(6, 4, 47);
+jsteam_data.setCell(6, 5, -136);
+jsteam_data.setCell(6, 6, 1);
+jsteam_data.setCell(6, 7, 20);
+jsteam_data.setCell(6, 8, 30);
+jsteam_data.setCell(6, 9, 10);
+jsteam_data.setCell(6, 10, -10);
+jsteam_data.setCell(7, 0, "sf2 - L");
+jsteam_data.setCell(7, 1, 10);
+jsteam_data.setCell(7, 2, 0);
+jsteam_data.setCell(7, 3, 0);
+jsteam_data.setCell(7, 4, 77);
+jsteam_data.setCell(7, 5, -136);
+jsteam_data.setCell(7, 6, 1);
+jsteam_data.setCell(7, 7, 5);
+jsteam_data.setCell(7, 8, 30);
+jsteam_data.setCell(7, 9, 10);
+jsteam_data.setCell(7, 10, 0);
+
+        
+        var options = {
+        width: 1200,
+        height: 600,
+        isStacked: true
+        };
+        
+        var jsteam_table = new google.visualization.SteppedAreaChart(document.getElementById('chart_div'));
+        jsteam_table.draw(jsteam_data, options);
+           
+      }
+    </script>
+  </head>
+  <body>
+    <H1>7314 - Tornadoes Data</H1>
+    <div id="chart_div"></div>
+  </body>
+</html>
