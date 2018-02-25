@@ -2,23 +2,8 @@ import tbapy
 import csv
 import gviz_api
 import os
-
-tba = tbapy.TBA('fWFSAeNa3VxZUdVJhaXgAXjnM9mfLBmbw1bbOrviglJBtJxmcUTANIMpECdWSSwU')
-
-year = "2018"
-red = "red"
-blue = "blue"
-teamKeys = "team_keys"
-event = input("Enter an event ID: ")  # 2018week0, 2018mokc2, 2018iacf
-lev = "Levitate"
-csvFile = ("TBA_Match_Data_%s.csv" % event)
-csvFilePath = (event + "\\" + csvFile)
-htmlFile = ("TBACharts_%s.html" % event)
-htmlFilePath = (event + "\\" + htmlFile)
-teamObjects = tba.event_teams(event, simple="true")
-dictList = {}
-dictChart = {}
-dictPredict = {}
+import vari
+import prediction
 
 page_template = """
 <html>
@@ -128,21 +113,9 @@ team_page_template = """
 </html>
 """
 
-
-def frc(points):
-    output = round(points / matchCount, 2)
-    return output
-
-
-def createlink(matchkeystring, linktext):
-    link = "<a href=https://www.thebluealliance.com/match/" + matchkeystring + " target='_blank'>" + linktext +\
-           "</a>"
-    return link
-
-
-if not os.path.exists(event):
-    os.makedirs(event, 0o777)
-f = open(csvFilePath, "w+", newline='')
+if not os.path.exists(vari.event):
+    os.makedirs(vari.event, 0o777)
+f = open(vari.csvFilePath, "w+", newline='')
 
 teamData = csv.writer(f, quoting=csv.QUOTE_ALL)
 
@@ -150,7 +123,7 @@ teamData.writerow(["Team Number", "Team Name", "Number of Matches", "Ranking Poi
                    "Auto Switch", "Auto Scale", "Tele Switch", "Opponent Switch", "Tele Scale", "No Cubes in Vault",
                    "No of Climbs", "No of Parks", "Foul Points", "Average Score", "Best Match", "Worst Match"])
 
-for team in teamObjects:
+for team in vari.teamObjects:
     # Start variable list to reset for each team #
     matchCount = 0
     winCount = 0
@@ -172,15 +145,15 @@ for team in teamObjects:
     totalPoints = 0
     bestScore = 0
     worstScore = 0
-    worstMatchNumber = "NA"
-    bestMatchNumber = "NA"
-    bestMatch = "NA"
-    worstMatch = "NA"
+    worstMatchNumber = vari.NA
+    bestMatchNumber = vari.NA
+    bestMatch = vari.NA
+    worstMatch = vari.NA
     dictMatch = {}
     teamNumber = getattr(team, "team_number")
     teamName = getattr(team, "nickname")
     teamKey = getattr(team, "key")
-    eventMatch = tba.team_matches(teamKey, event)
+    eventMatch = vari.tba.team_matches(teamKey, vari.event)
     # Eng variable list to reset for each team #
     print("Looking at team", teamNumber)
     # Look through matches #
@@ -190,8 +163,8 @@ for team in teamObjects:
         matchLevel = getattr(match, "comp_level")
         matchCount += 1
         alliances = getattr(match, "alliances")
-        redScore = alliances[red]["score"]
-        blueScore = alliances[blue]["score"]
+        redScore = alliances[vari.red]["score"]
+        blueScore = alliances[vari.blue]["score"]
         winningAlliance = getattr(match, "winning_alliance")
         scoreDict = getattr(match, "score_breakdown")
 
@@ -202,14 +175,14 @@ for team in teamObjects:
             break
 
         # which alliance is the team on #
-        if teamKey in alliances[red]["team_keys"] or teamKey in alliances[red]["surrogate_team_keys"]:
-            alliance = red
+        if teamKey in alliances[vari.red][vari.teamKeys] or teamKey in alliances[vari.red]["surrogate_team_keys"]:
+            alliance = vari.red
             score = redScore
-            opponent = blue
+            opponent = vari.blue
         else:
-            alliance = blue
+            alliance = vari.blue
             score = blueScore
-            opponent = red
+            opponent = vari.red
         compLevel = getattr(match, "comp_level")
         # Score breakdown below. Beware.
         if alliance == winningAlliance:
@@ -225,7 +198,7 @@ for team in teamObjects:
                 faceBossRP += 1
             if alliance == winningAlliance:
                 winRP = winRP + 2
-            if winningAlliance not in [blue, red]:
+            if winningAlliance not in [vari.blue, vari.red]:
                 winRP += 1
         # Set match numbers/scores
         matchMobility = scoreDict[alliance]["autoRunPoints"]
@@ -243,8 +216,8 @@ for team in teamObjects:
         matchPark = int((scoreDict[alliance]["endgamePoints"] % 30) / 5)
 
         # Add climb or park
-        if (scoreDict[alliance]["endgameRobot1"] == lev or scoreDict[alliance]["endgameRobot2"] == lev or
-                scoreDict[alliance]["endgameRobot3"] == lev):
+        if (scoreDict[alliance]["endgameRobot1"] == vari.lev or scoreDict[alliance]["endgameRobot2"] == vari.lev or
+                scoreDict[alliance]["endgameRobot3"] == vari.lev):
             climb = climb + matchClimb - 1
             levitate += 1
         else:
@@ -299,19 +272,19 @@ for team in teamObjects:
     # Find averages
     if matchCount > 0:
         winPercent = round((winCount / matchCount) * 100, 2)
-        avgAutoMobility = frc(autoMobility)
-        avgAutoSwitch = frc(autoSwitch)
-        avgAutoScale = frc(autoScale)
-        avgTeleSwitch = frc(teleSwitch)
-        avgTeleScale = frc(teleScale)
-        avgTeleOppSwitch = frc(teleOppSwitch)
-        avgVault = frc(vault)
-        avgEngGameScore = frc(endGameScore)
-        avgPoints = frc(totalPoints)
+        avgAutoMobility = vari.frc(autoMobility, matchCount)
+        avgAutoSwitch = vari.frc(autoSwitch, matchCount)
+        avgAutoScale = vari.frc(autoScale, matchCount)
+        avgTeleSwitch = vari.frc(teleSwitch, matchCount)
+        avgTeleScale = vari.frc(teleScale, matchCount)
+        avgTeleOppSwitch = vari.frc(teleOppSwitch, matchCount)
+        avgVault = vari.frc(vault, matchCount)
+        avgEngGameScore = vari.frc(endGameScore, matchCount)
+        avgPoints = vari.frc(totalPoints, matchCount)
         avgClimb = climb
         avgPark = park
         avgLevitate = levitate
-        avgFoulPoints = frc(foulPoints)
+        avgFoulPoints = vari.frc(foulPoints, matchCount)
     else:
         winPercent = 0
         avgAutoMobility = 0
@@ -330,25 +303,26 @@ for team in teamObjects:
 
     # Aggregate some data
     totalRP = winRP + autoQuestRP + faceBossRP
-    worstLink = createlink(worstMatch, worstMatchNumber)
-    bestLink = createlink(bestMatch, bestMatchNumber)
+    worstLink = vari.createlink(worstMatch, worstMatchNumber)
+    bestLink = vari.createlink(bestMatch, bestMatchNumber)
 
     # Create data dictionaries for the charts
     dataList = [teamNumber, teamName, matchCount, totalRP, winPercent, avgAutoMobility,
                 avgAutoSwitch, avgAutoScale, avgTeleSwitch, avgTeleOppSwitch, avgTeleScale, avgVault,
                 avgClimb, avgLevitate, avgPark, avgFoulPoints, avgPoints, bestLink, worstLink]
     dataChart = [avgAutoMobility, avgAutoSwitch, avgAutoScale, avgTeleSwitch, avgTeleOppSwitch, avgTeleScale,
-                 avgVault * 5, frc(avgClimb * 30), frc(avgLevitate * 30), frc(avgPark * 5), avgFoulPoints]
+                 avgVault * 5, vari.frc(avgClimb * 30, matchCount), vari.frc(avgLevitate * 30, matchCount),
+                 vari.frc(avgPark * 5, matchCount), avgFoulPoints]
 
     # Write the row for the team
     teamData.writerow(dataList)
 
-    dictList.update({teamNumber: dataList})
-    dictChart.update({teamNumber: dataChart})
+    vari.dictList.update({teamNumber: dataList})
+    vari.dictChart.update({teamNumber: dataChart})
 
     # HTML for each team
-    htmlFileTeam = ("TBACharts_%s_%s.html" % (event, teamNumber))
-    htmlFileTeamPath = (event + "\\" + htmlFileTeam)
+    htmlFileTeam = ("TBACharts_%s_%s.html" % (vari.event, teamNumber))
+    htmlFileTeamPath = (vari.event + "\\" + htmlFileTeam)
     teamDescription = {("Match Key", "string"): [("Match Number Sort", "number"),
                        ("Auto Mobility", "number"),
                        ("Auto Switch", "number"),
@@ -379,81 +353,7 @@ f.close()
 print("Data created")
 # MATCH PREDICTIONS START HERE
 print("Starting Match Predictions")
-eventRemainingMatches = tba.event_matches(event)
-for match1 in eventRemainingMatches:
-    matchKey1 = getattr(match1, "key")
-    alliances1 = getattr(match1, "alliances")
-    redScore1 = alliances1[red]["score"]
-    blueScore1 = alliances1[blue]["score"]
-    # matchNumber = int(getattr(match1, "match_number"))
-    # If the match hasn't been played yet
-    if redScore1 == -1 or blueScore1 == -1:
-        print("Predicting Match" + matchKey1)
-        blueTeam1 = alliances1[blue]["team_keys"][0]
-        blueTeam2 = alliances1[blue]["team_keys"][1]
-        blueTeam3 = alliances1[blue]["team_keys"][2]
-        redTeam1 = alliances1[red]["team_keys"][0]
-        redTeam2 = alliances1[red]["team_keys"][1]
-        redTeam3 = alliances1[red]["team_keys"][2]
-        # trim teams down to just numbers
-        bT1Number = blueTeam1[3:]
-        bT2Number = blueTeam2[3:]
-        bT3Number = blueTeam3[3:]
-        rT1Number = redTeam1[3:]
-        rT2Number = redTeam2[3:]
-        rT3Number = redTeam3[3:]
-
-        # Predict the scores
-        """dictList ={teamNumber: [teamNumber [0], teamName[1], matchCount[2], totalRP[3], winPercent[4], vgMobility[5],
-                    avgAutoSwitch[6], avgAutoScale[7], avgTeleSwitch[8], avgTeleOppSwitch[9], avgTeleScale[10], 
-                    avgVault[11], avgClimb[12], avgLevitate[13], avgPark[14], avgFoulPoints[15], avgPoints[16], 
-                    bestLink[17], worstLink[18]]}
-                    
-           dictChart =avgVault * 5[6], frc(avgClimb * 30)[7], frc(avgLevitate * 30)[8], frc(avgPark * 5)[9]"""
-        # Blue Predicted Points
-        blueMobility = (dictList[int(bT1Number)][5] + dictList[int(bT2Number)][5] + dictList[int(bT3Number)][5]) / 3
-        blueAutoSwitch = (dictList[int(bT1Number)][6] + dictList[int(bT2Number)][6] +
-                          dictList[int(bT3Number)][6]) / 3
-        blueAutoScale = (dictList[int(bT1Number)][7] + dictList[int(bT2Number)][7] + dictList[int(bT3Number)][7]) / 3
-        blueTeleSwitch = (dictList[int(bT1Number)][8] + dictList[int(bT2Number)][8] + dictList[int(bT3Number)][8]) / 3
-        blueOppSwitch = (dictList[int(bT1Number)][9] + dictList[int(bT2Number)][9] + dictList[int(bT3Number)][9]) / 3
-        blueTeleScale = (dictList[int(bT1Number)][10] + dictList[int(bT2Number)][10] + dictList[int(bT3Number)][10]) / 3
-        blueVault = (dictList[int(bT1Number)][11] + dictList[int(bT2Number)][11] + dictList[int(bT3Number)][11]) * 5 / 3
-        blueEndGame = (dictChart[int(bT1Number)][7] + dictChart[int(bT2Number)][7] + dictChart[int(bT3Number)][7] +
-                       dictChart[int(bT1Number)][8] + dictChart[int(bT2Number)][8] + dictChart[int(bT3Number)][8] +
-                       dictChart[int(bT1Number)][9] + dictChart[int(bT2Number)][9] + dictChart[int(bT3Number)][9]) / 3
-        blueFouls = (dictList[int(bT1Number)][15] + dictList[int(bT2Number)][15] + dictList[int(bT3Number)][15]) / 3
-
-        # Red predicted points
-        redMobility = (dictList[int(rT1Number)][5] + dictList[int(rT2Number)][5] + dictList[int(rT3Number)][5]) / 3
-        redAutoSwitch = (dictList[int(rT1Number)][6] + dictList[int(rT2Number)][6] +
-                         dictList[int(rT3Number)][6]) / 3
-        redAutoScale = (dictList[int(rT1Number)][7] + dictList[int(rT2Number)][7] + dictList[int(rT3Number)][7]) / 3
-        redTeleSwitch = (dictList[int(rT1Number)][8] + dictList[int(rT2Number)][8] + dictList[int(rT3Number)][8]) / 3
-        redOppSwitch = (dictList[int(rT1Number)][9] + dictList[int(rT2Number)][9] + dictList[int(rT3Number)][9]) / 3
-        redTeleScale = (dictList[int(rT1Number)][10] + dictList[int(rT2Number)][10] + dictList[int(rT3Number)][10]) / 3
-        redVault = (dictList[int(rT1Number)][11] + dictList[int(rT2Number)][11] + dictList[int(rT3Number)][11]) * 5 / 3
-        redEndGame = (dictChart[int(rT1Number)][7] + dictChart[int(rT2Number)][7] + dictChart[int(rT3Number)][7] +
-                      dictChart[int(rT1Number)][8] + dictChart[int(rT2Number)][8] + dictChart[int(rT3Number)][8] +
-                      dictChart[int(rT1Number)][9] + dictChart[int(rT2Number)][9] + dictChart[int(rT3Number)][9]) / 3
-        redFouls = (dictList[int(rT1Number)][15] + dictList[int(rT2Number)][15] + dictList[int(rT3Number)][15]) / 3
-
-        bluePredictedScore = (blueMobility + blueAutoSwitch + blueAutoScale + (blueTeleSwitch + abs(redOppSwitch)) / 2 +
-                              blueTeleScale + blueVault + blueEndGame + abs(redFouls))
-        redPredictedScore = (redMobility + redAutoSwitch + redAutoScale + (redTeleSwitch + abs(blueOppSwitch)) / 2 +
-                             redTeleScale + redVault + redEndGame + abs(blueFouls))
-
-        if bluePredictedScore > redPredictedScore:
-            predictWinner = blue
-        elif bluePredictedScore < redPredictedScore:
-            predictWinner = red
-        else:
-            predictWinner = "tie"
-
-        # Build Dictionary
-        predictList = [matchKey1, predictWinner, bT1Number, bT2Number, bT3Number, bluePredictedScore, redPredictedScore,
-                       rT1Number, rT2Number, rT3Number]
-        dictPredict.update({matchKey1: predictList})
+prediction.predict(vari.event, vari.dictList, vari.dictChart)
 
 # Create visualization of data
 description = {("Team Number", "string"): [("Team Number", "string"),
@@ -478,7 +378,7 @@ description = {("Team Number", "string"): [("Team Number", "string"),
                }
 
 # get dictionary for table
-data = dictList
+data = vari.dictList
 
 # Loading it into gviz_api.DataTable
 data_table = gviz_api.DataTable(description)
@@ -506,7 +406,7 @@ descriptionChart = {("Team Number", "string"): [("Auto Mobility", "number"),
                     ("Foul Points", "number")]
                     }
 # get dictionary for Chart
-dataChart = dictChart
+dataChart = vari.dictChart
 # More loading for Chart
 data_table_chart = gviz_api.DataTable(descriptionChart)
 data_table_chart.LoadData(dataChart)
@@ -533,7 +433,7 @@ descriptionPrediction = {("Match Key", "string"): [("Match Key", "string"),
 
 # loading predictions
 data_table_predict = gviz_api.DataTable(descriptionPrediction)
-data_table_predict.LoadData(dictPredict)
+data_table_predict.LoadData(vari.dictPredict)
 
 # Data set for predictions
 jspredict = data_table_predict.ToJSCode("jspredict_data",
@@ -541,10 +441,10 @@ jspredict = data_table_predict.ToJSCode("jspredict_data",
                                                        "Blue Score", "Red Score", "Red 1", "Red 2", "Red 3"))
 
 # Put the JS code and JSON string into the template.
-h = open(htmlFilePath, 'w')
+h = open(vari.htmlFilePath, 'w')
 h.write("")
 h.write(page_template % vars())
 
 h.close()
-os.system("start " + htmlFilePath)
-print("Charts Completed")
+os.system("start " + vari.htmlFilePath)
+print("Completed")
