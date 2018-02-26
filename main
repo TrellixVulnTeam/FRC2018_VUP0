@@ -353,7 +353,7 @@ f.close()
 print("Data created")
 # MATCH PREDICTIONS START HERE
 print("Starting Match Predictions")
-prediction.predict(vari.event, vari.dictList, vari.dictChart)
+dictPredict = prediction.predict(vari.event, vari.dictList, vari.dictChart)
 
 # Create visualization of data
 description = {("Team Number", "string"): [("Team Number", "string"),
@@ -433,7 +433,7 @@ descriptionPrediction = {("Match Key", "string"): [("Match Key", "string"),
 
 # loading predictions
 data_table_predict = gviz_api.DataTable(descriptionPrediction)
-data_table_predict.LoadData(vari.dictPredict)
+data_table_predict.LoadData(dictPredict)
 
 # Data set for predictions
 jspredict = data_table_predict.ToJSCode("jspredict_data",
