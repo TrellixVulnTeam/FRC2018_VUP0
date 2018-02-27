@@ -1,10 +1,8 @@
 import vari
 
 
-def predict (event, dictList, dictChart):
-    eventRemainingMatches = vari.tba.event_matches(event)
-    dictPredict = {}
-    for match1 in eventRemainingMatches:
+def predict(match1, dictList, dictChart):
+
         matchKey1 = getattr(match1, "key")
         alliances1 = getattr(match1, "alliances")
         redScore1 = alliances1[vari.red]["score"]
@@ -89,6 +87,5 @@ def predict (event, dictList, dictChart):
             predictList = [matchKey1, predictWinner, bT1Number, bT2Number, bT3Number, bluePredictedScore,
                            redPredictedScore,
                            rT1Number, rT2Number, rT3Number]
-            dictPredict.update({matchKey1: predictList})
 
-            return dictPredict
+            return predictList

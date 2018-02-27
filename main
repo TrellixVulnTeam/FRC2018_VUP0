@@ -353,7 +353,14 @@ f.close()
 print("Data created")
 # MATCH PREDICTIONS START HERE
 print("Starting Match Predictions")
-dictPredict = prediction.predict(vari.event, vari.dictList, vari.dictChart)
+eventMatches = vari.tba.event_matches(vari.event)
+dictPredict = {}
+for matches in eventMatches:
+    matchKey1 = getattr(matches, "key")
+    predictList = prediction.predict(matches, vari.dictList, vari.dictChart)
+
+    dictPredict.update({matchKey1: predictList})
+
 
 # Create visualization of data
 description = {("Team Number", "string"): [("Team Number", "string"),

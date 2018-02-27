@@ -33,4 +33,3 @@ htmlFilePath = (event + "\\" + htmlFile)
 teamObjects = tba.event_teams(event, simple="true")
 dictList = {}
 dictChart = {}
-dictPredict = {}
