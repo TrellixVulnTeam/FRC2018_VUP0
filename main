@@ -79,9 +79,10 @@ team_page_template = """
   <title>TBA Team Data</title>
     <script src="http://www.google.com/jsapi" type="text/javascript"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="../js/frc.js"></script>
     <script>
-      google.load("visualization", "1", {packages:["controls", "corechart"]});
-      google.setOnLoadCallback(drawTable);
+   
+    loadGoogleCharts();
       
       function drawTable() {
         %(jsteam)s
