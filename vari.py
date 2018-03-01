@@ -30,6 +30,20 @@ def predicttable(desc, dictionary):
     return jspredict
 
 
+def teamid(attribute, alliance, position):
+    listposition = position - 1
+    teamnum = attribute[alliance][teamKeys][listposition][3:]
+    return teamnum
+
+
+def isplayed(score1, score2):
+    if score1 == -1 or score2 == -1:
+        played = False
+    else:
+        played = True
+    return played
+
+
 tba = tbapy.TBA(setapikey())
 year = "2018"
 red = "red"

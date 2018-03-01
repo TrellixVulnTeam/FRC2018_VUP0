@@ -13,9 +13,9 @@ page_template = """
     <script src="../js/frc.js"></script>
     <script>
    
-      loadGoogleCharts();
-      
-      function drawTable() {
+    loadGoogleCharts();
+
+    function drawTable() {
         %(jscode)s
         %(jschart)s
         %(jspredict)s
@@ -54,7 +54,6 @@ page_template = """
         document.getElementById("team_object").width = '1500px';
         document.getElementById("team_object").height = '800px';
         }
-           
       }
     </script>
   </head>
@@ -162,9 +161,7 @@ for team in vari.teamObjects:
         scoreDict = getattr(match, "score_breakdown")
 
         # check if played match
-        if scoreDict is None:
-            break
-        if redScore == -1 or blueScore == -1:
+        if not vari.isplayed(redScore, blueScore):
             break
 
         # which alliance is the team on #
@@ -248,7 +245,7 @@ for team in vari.teamObjects:
             worstMatchNumber = ("%s%s" % (matchLevel, matchNumber))
         # Create match dictionaries
         dictMatchKey = ("%s%s - %s" % (matchLevel, matchNumber, outcome))
-        # Determin Match Number for sorting
+        # Determine Match Number for sorting
         if matchLevel == "qf":
             matchNumberSort = 100 + matchNumber
         elif matchLevel == "sf":
