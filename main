@@ -1,4 +1,3 @@
-import tbapy
 import csv
 import gviz_api
 import os
@@ -11,7 +10,7 @@ page_template = """
   <title>TBA Data</title>
     <script src="http://www.google.com/jsapi" type="text/javascript"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script src="/js/frc.js"></script>
+    <script src="../js/frc.js"></script>
     <script>
    
       loadGoogleCharts();
@@ -358,8 +357,8 @@ dictPredict = {}
 for matches in eventMatches:
     matchKey1 = getattr(matches, "key")
     predictList = prediction.predict(matches, vari.dictList, vari.dictChart)
-
-    dictPredict.update({matchKey1: predictList})
+    if predictList is not None:
+        dictPredict.update({matchKey1: predictList})
 
 
 # Create visualization of data
@@ -439,13 +438,10 @@ descriptionPrediction = {("Match Key", "string"): [("Match Key", "string"),
                                                    ]}
 
 # loading predictions
-data_table_predict = gviz_api.DataTable(descriptionPrediction)
-data_table_predict.LoadData(dictPredict)
-
-# Data set for predictions
-jspredict = data_table_predict.ToJSCode("jspredict_data",
-                                        columns_order=("Match Key", "Winner", "Blue 1", "Blue 2", "Blue 3",
-                                                       "Blue Score", "Red Score", "Red 1", "Red 2", "Red 3"))
+if dictPredict != {}:
+    jspredict = vari.predicttable(descriptionPrediction, dictPredict)
+else:
+    jspredict = vari.predicttable(descriptionPrediction, vari.dictPredictEmpty)
 
 # Put the JS code and JSON string into the template.
 h = open(vari.htmlFilePath, 'w')
