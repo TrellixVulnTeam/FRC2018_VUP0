@@ -409,14 +409,10 @@ data_table_chart = gviz_api.DataTable(descriptionChart)
 data_table_chart.LoadData(dataChart)
 
 # Data set for Chart
-jschart = data_table_chart.ToJSCode("jschart_data",
-                                    columns_order=("Team Number", "Auto Mobility", "Auto Switch", "Auto Scale",
-                                                   "Tele Switch", "Opponent Switch", "Tele Scale", "Cubes in Vault",
-                                                   "Climb Points", "Levitate Points", "Park Points", "Foul Points"),
-                                    order_by="Team Number")
+jschart = vari.makechart(data_table_chart, "Team Number")
 
 # Prediction Table
-descriptionPrediction = {("Match Key", "string"): [("Match Key", "string"),
+descriptionPrediction = {("Match Key", "string"): [("Match Key", "number"),
                                                    ("Winner", "string"),
                                                    ("Blue 1", "string"),
                                                    ("Blue 2", "string"),

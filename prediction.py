@@ -3,14 +3,14 @@ import vari
 
 def predict(match1, dictlist, dictchart):
 
-        matchkey = getattr(match1, "key")
+        matchkey = getattr(match1, "match_number")
         alliance = getattr(match1, "alliances")
         redscore = alliance[vari.red]["score"]
         bluescore = alliance[vari.blue]["score"]
         # matchNumber = int(getattr(match1, "match_number"))
         # If the match hasn't been played yet
         if not vari.isplayed(redscore, bluescore):
-            print("Predicting Match" + matchkey)
+            print("Predicting Match" + str(matchkey))
             # trim teams down to just numbers
             bt1number = vari.teamid(alliance, vari.blue, 1)
             bt2number = vari.teamid(alliance, vari.blue, 2)
@@ -78,7 +78,7 @@ def predict(match1, dictlist, dictchart):
                 predictwinner = "tie"
 
             # Build Dictionary
-            predictlist = [matchkey, predictwinner, bt1number, bt2number, bt3number, bluepredictedscore,
+            predictlist = [int(matchkey), predictwinner, bt1number, bt2number, bt3number, bluepredictedscore,
                            redpredictedscore,
                            rt1number, rt2number, rt3number]
 

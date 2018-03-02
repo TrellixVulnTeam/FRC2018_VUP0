@@ -2,6 +2,15 @@ import tbapy
 import gviz_api
 
 
+def makechart(chart, sort):
+    output = chart.ToJSCode("jschart_data",
+                            columns_order=("Team Number", "Auto Mobility", "Auto Switch", "Auto Scale",
+                                           "Tele Switch", "Opponent Switch", "Tele Scale", "Cubes in Vault",
+                                           "Climb Points", "Levitate Points", "Park Points", "Foul Points"),
+                            order_by=sort)
+    return output
+
+
 def setapikey():
     global apikey
     apikey = 'fWFSAeNa3VxZUdVJhaXgAXjnM9mfLBmbw1bbOrviglJBtJxmcUTANIMpECdWSSwU'
@@ -26,7 +35,8 @@ def predicttable(desc, dictionary):
     # Data set for predictions
     jspredict = data_table_predict.ToJSCode("jspredict_data",
                                             columns_order=("Match Key", "Winner", "Blue 1", "Blue 2", "Blue 3",
-                                                           "Blue Score", "Red Score", "Red 1", "Red 2", "Red 3"))
+                                                           "Blue Score", "Red Score", "Red 1", "Red 2", "Red 3"),
+                                            order_by="Match Key")
     return jspredict
 
 
