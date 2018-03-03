@@ -63,10 +63,12 @@ event = input("Enter an event ID: ")  # 2018week0, 2018mokc2, 2018iacf
 lev = "Levitate"
 NA = "NA"
 csvFile = ("TBA_Match_Data_%s.csv" % event)
+csvFilep = ("TBA_Match_Predictions_%s.csv" % event)
 csvFilePath = (event + "\\" + csvFile)
+csvFilePathp = (event + "\\" + csvFilep)
 htmlFile = ("TBACharts_%s.html" % event)
 htmlFilePath = (event + "\\" + htmlFile)
 teamObjects = tba.event_teams(event, simple="true")
 dictList = {}
 dictChart = {}
-dictPredictEmpty = {"No Match to Predict": ["None", "tie", 0, 0, 0, 0, 0, 0, 0, 0]}
+dictPredictEmpty = {"No Match to Predict": [0, "tie", 0, 0, 0, 0, 0, 0, 0, 0]}

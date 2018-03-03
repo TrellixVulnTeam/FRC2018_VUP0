@@ -59,7 +59,7 @@ page_template = """
   </head>
   <body>
     <H1>TBA Table Data</H1>
-    <div id="table_div_jscode"></div>
+    <div id="table_div_jscode" style="width: 1800; height:1200; overflow:auto;"></div>
     <div id ="team_data"> 
     <object id="team_object" type='text/html' data='' width='0' 
     height='0' style='overflow:auto;border:2px ridge blue'></object>
@@ -143,7 +143,8 @@ for team in vari.teamObjects:
     worstMatch = vari.NA
     dictMatch = {}
     teamNumber = getattr(team, "team_number")
-    teamName = getattr(team, "nickname")
+    teamNameNotEncoded = getattr(team, "nickname")
+    teamName = teamNameNotEncoded.encode("ascii", "replace")
     teamKey = getattr(team, "key")
     eventMatch = vari.tba.team_matches(teamKey, vari.event)
     # Eng variable list to reset for each team #
@@ -342,15 +343,27 @@ f.close()
 
 print("Data created")
 # MATCH PREDICTIONS START HERE
+fp = open(vari.csvFilePathp, "w+", newline='')
+
+predictData = csv.writer(fp, quoting=csv.QUOTE_ALL)
+
+predictData.writerow(["Match Number", "Winner", "Blue 1", "Blue 2", "Blue 3", "Blue Score", "Red Score", "Red 1",
+                      "Red 2", "Red 3"])
+
 print("Starting Match Predictions")
 eventMatches = vari.tba.event_matches(vari.event)
 dictPredict = {}
 for matches in eventMatches:
     matchKey1 = getattr(matches, "key")
     predictList = prediction.predict(matches, vari.dictList, vari.dictChart)
+
+    # Write predictions to csv so that I can read them later and see accuracy
     if predictList is not None:
         dictPredict.update({matchKey1: predictList})
+        predictData.writerow(predictList)
 
+
+fp.close()
 
 # Create visualization of data
 description = {("Team Number", "string"): [("Team Number", "string"),
